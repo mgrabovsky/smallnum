@@ -7,10 +7,10 @@ compiler:
 before_install:
   - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
   - sudo apt-get -qq update
-  - if [ "$CXX" = "gcc" ]; then sudo apt-get -qq install g++-4.9; fi
+  - if [ "$CC" = "gcc" ]; then sudo apt-get -qq install gcc-4.9; fi
 
 install:
-  - if [ "$CXX" = "gcc" ]; then export CXX="g++-4.9" CC="gcc-4.9"; fi
+  - if [ "$CC" = "gcc" ]; then export CC="gcc-4.9"; fi
 
 script:
   - mkdir _build && cd _build
