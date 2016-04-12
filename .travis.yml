@@ -1,18 +1,12 @@
 language: c
 
 compiler:
-  - gcc
   - clang
-
-cache: apt
-
-install:
-  - sudo apt-get install cmake
+  - gcc
 
 script:
   - mkdir _build && cd _build
-  - cmake ..
-  - make
+  - cmake .. && make
   - ./sn_test
 
 notifications:
