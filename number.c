@@ -45,11 +45,6 @@ SN *sn_copy(SN * const restrict dst, const SN * restrict src) {
     assert(dst && src && sn_valid__(src));
     assert(dst != src);
 
-    /* TODO: Should we do this? */
-    if (dst->blocks) {
-        free(dst->blocks);
-    }
-
     *dst = *src;
     dst->blocks = malloc(src->size * sizeof(*src->blocks));
     if (!dst->blocks) {
