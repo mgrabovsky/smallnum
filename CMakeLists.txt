@@ -1,0 +1,12 @@
+project(smallnum)
+cmake_minimum_required(VERSION 2.8)
+
+set(CMAKE_C_FLAGS "-std=c11 -Wall -Wextra -pedantic")
+set(SMALLNUM_SRC number.c)
+
+add_library(smallnum STATIC ${SMALLNUM_SRC})
+add_executable(sn_test ${SMALLNUM_SRC} test/test.c)
+
+add_dependencies(sn_test smallnum)
+
+# vim: set et sw=4:
