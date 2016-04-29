@@ -1,0 +1,2 @@
+[![TravisCI Build Status](https://travis-ci.org/mgrabovsky/smallnum.svg)](https://travis-ci.org/mgrabovsky/smallnum)
+
