@@ -2,14 +2,17 @@ import os
 import ycm_core
 
 flags = [
+    '-x', 'c',
+    '-std=c11',
     '-Wall',
     '-Wextra',
-    '-Wno-unused-parameter',
-    '-Wno-unused-variable',
-    '-fexceptions',
+    '-Wpedantic',
+    '-Wshadow',
+    '-Wformat=2',
+    '-Wformat-security',
+    '-Wcast-qual',
+    '-Wuninitialized',
     '-DNDEBUG',
-    '-std=c11',
-    '-x', 'c',
     '-I', '.',
 ]
 

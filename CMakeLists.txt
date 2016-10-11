@@ -1,7 +1,9 @@
 project(smallnum)
 cmake_minimum_required(VERSION 2.8)
 
-set(CMAKE_C_FLAGS "-std=c11 -Wall -Wextra -pedantic")
+set(CMAKE_C_FLAGS "-std=c11 -Wall -Wextra -Wpedantic -Wshadow -Wformat=2 "
+    "-Wformat-security -Wcast-qual -Wuninitialized -fsanitize=undefined "
+    "-fsanitize=address")
 set(SMALLNUM_SRC number.c)
 
 add_library(smallnum STATIC ${SMALLNUM_SRC})
