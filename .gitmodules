@@ -1,6 +1,0 @@
-[submodule "deps/testing"]
-	path = deps/testing
-	url = https://github.com/spito/testing.git
-[submodule "deps/cmocka"]
-	path = deps/cmocka
-	url = git://git.cryptomilk.org/projects/cmocka.git/

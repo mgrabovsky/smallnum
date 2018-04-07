@@ -228,12 +228,14 @@ static bool sn_valid__(const SN *num) {
 static SN *sn_resize__(SN * const num, size_t new_size) {
     assert(num && sn_valid__(num) && new_size > 0);
 
-    if (num->size == new_size)
+    if (num->size == new_size) {
         return num;
+    }
 
     num->blocks = realloc(num->blocks, new_size * sizeof(*num->blocks));
-    if (!num->blocks)
+    if (!num->blocks) {
         return NULL;
+    }
 
     num->size = new_size;
 
