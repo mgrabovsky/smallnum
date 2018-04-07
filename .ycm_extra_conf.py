@@ -12,6 +12,7 @@ flags = [
     '-Wformat-security',
     '-Wcast-qual',
     '-Wuninitialized',
+    '-Wno-unused-parameter',
     '-DNDEBUG',
     '-I', '.',
 ]
