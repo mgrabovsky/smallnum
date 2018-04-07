@@ -14,7 +14,7 @@ compiler:
 before_install:
   - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
   - sudo apt-get -qq update
-  - sudo apt-get -qq install --upgrade-only binutils
+  - sudo apt-get -qq install --only-upgrade binutils
   - if [ "$CC" != "clang" ]; then sudo apt-get -qq install $CC; fi
 
 install:
