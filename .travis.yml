@@ -12,6 +12,14 @@ before_install:
   - sudo apt-get -qq update
   - if [ "$CC" != "clang" ]; then sudo apt-get -qq install $CC; fi
 
+install:
+  - wget https://cmocka.org/files/1.1/cmocka-1.1.1.tar.xz
+  - tar xvf cmocka-1.1.1.tar.xz && cd cmocka-1.1.1
+  - mkdir build && cd build
+  - cmake -DCMAKE_INSTALL_PREFIX=/usr ..
+  - make && sudo make install
+  - cd ../.. && rm -rf cmocka-1.1.1
+
 script:
   - mkdir _build && cd _build
   - cmake .. && make
