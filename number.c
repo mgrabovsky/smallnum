@@ -10,6 +10,8 @@
 
 static bool sn_valid__(const SN *);
 static SN *sn_resize__(SN * const, size_t);
+static SN *sn_add_internal__(SN * const restrict, const SN *, const SN *, bool);
+static SN *sn_sub_internal__(SN * const restrict, const SN *, const SN *);
 
 /* =============================================================================
  * Initialization and cleanup functions
@@ -17,7 +19,7 @@ static SN *sn_resize__(SN * const, size_t);
  */
 
 /**
- * Initialize number and set it to zero.
+ * Initialize a number and set it to zero.
  */
 SN *sn_init(SN * const num) {
     assert(num);
@@ -35,8 +37,9 @@ SN *sn_init(SN * const num) {
 
 SN *sn_new(void) {
     SN *ret = malloc(sizeof(*ret));
-    if (!ret)
+    if (!ret) {
         return NULL;
+    }
 
     return sn_init(ret);
 }
@@ -240,33 +243,67 @@ static SN *sn_resize__(SN * const num, size_t new_size) {
 /* **********************************************************************************
  * Basic arithmetic operations
  */
+/* addition
+ * --------
+ *  a +  b =   a + b
+ * -a +  b =   b - a  ↓
+ *  a + -b =   a - b  ↓
+ * -a + -b = -(a + b)
+ *
+ * subtraction
+ * -----------
+ *  a -  b =   a - b
+ * -a -  b = -(a + b) ↑
+ *  a - -b =   a + b  ↑
+ * -a - -b =   b - a
+ */
 
-SN *sn_add(SN * const restrict res, const SN *a, const SN *b) {
-    /* FIXME: Handle negatives */
-    /* addition
-     * --------
-     *  a +  b =   a + b
-     * -a +  b =   b - a  ↓
-     *  a + -b =   a - b  ↓
-     * -a + -b = -(a + b)
-     *
-     * subtraction
-     * -----------
-     *  a -  b =   a - b
-     * -a -  b = -(a + b) ↑
-     *  a - -b =   a + b  ↑
-     * -a - -b =   b - a
-     */
-    assert(res && a && b);
+SN *sn_add(SN * const res, const SN *a, const SN *b) {
+    assert(res && a && b && sn_valid__(res) && sn_valid__(a) && sn_valid__(b));
     assert(res->blocks != a->blocks && res->blocks != b->blocks);
 
-    /* Preliminary size */
+    if (a->neg && !b->neg) {
+        return sn_sub_internal__(res, b, a);
+    } else if (!a->neg && b->neg) {
+        return sn_sub_internal__(res, a, b);
+    }
+
+    assert(a->neg == b->neg);
+
+    return sn_add_internal__(res, a, b, a->neg);
+}
+
+SN *sn_sub(SN * const res, const SN *a, const SN *b) {
+    assert(res && a && b && sn_valid__(a) && sn_valid__(b));
+    assert(res->blocks != a->blocks && res->blocks != b->blocks);
+
+    if (a->neg && !b->neg) {
+        return sn_add_internal__(res, a, b, true);
+    } else if (!a->neg && b->neg) {
+        return sn_add_internal__(res, a, b, false);
+    }
+
+    assert(a->neg == b->neg);
+
+    if (a->neg) {
+        return sn_sub_internal__(res, b, a);
+    } else {
+        return sn_sub_internal__(res, a, b);
+    }
+}
+
+SN *sn_mul(SN * const res, const SN *a, const SN *b) {
+    // TODO
+    return res;
+}
+
+static SN *sn_add_internal__(SN * const res, const SN *a, const SN *b, bool negative) {
     size_t sum_size = max(a->size, b->size);
     if (!sn_resize__(res, sum_size))
         return NULL;
 
     bool overflow = false;
-    sn_word tmp  = 0;
+    sn_word tmp   = 0;
 
     for (size_t i = 0; i < sum_size; ++i) {
         if (i >= a->size) {
@@ -288,6 +325,41 @@ SN *sn_add(SN * const restrict res, const SN *a, const SN *b) {
         if (!sn_resize__(res, sum_size + 1))
             return NULL;
         res->blocks[sum_size] = overflow;
+    }
+
+    res->neg = negative;
+
+    return res;
+}
+
+static SN *sn_sub_internal__(SN * const res, const SN *a, const SN *b) {
+    size_t diff_size = max(a->size, b->size);
+    if (!sn_resize__(res, diff_size))
+        return NULL;
+
+    bool underflow = false;
+    sn_word tmp   = 0;
+
+    for (size_t i = 0; i < diff_size; ++i) {
+        if (i >= a->size) {
+            tmp            = - b->blocks[i] + underflow;
+            res->blocks[i] = tmp;
+            underflow       = true;
+        } else if (i >= b->size) {
+            tmp            = a->blocks[i] - underflow;
+            res->blocks[i] = tmp;
+            underflow       = (tmp > a->blocks[i]);
+        } else {
+            tmp            = a->blocks[i] - b->blocks[i] + underflow;
+            res->blocks[i] = tmp;
+            underflow       = (tmp > a->blocks[i]);
+        }
+    }
+
+    if (underflow) {
+        if (!sn_resize__(res, diff_size + 1))
+            return NULL;
+        res->blocks[diff_size] = underflow;
     }
 
     return res;
@@ -313,7 +385,7 @@ size_t sn_sn2bin(const SN *num, uint8_t * const dst) {
         dst[4*i+1] = (b & 0x0000ff00) >> 8;
         dst[4*i+2] = (b & 0x00ff0000) >> 16;
         dst[4*i+3] = (b & 0xff000000) >> 24;
-#endif // __BYTE_ORDER__ 
+#endif // __BYTE_ORDER__
     }
 
     return sn_num_bytes(num);
@@ -342,7 +414,7 @@ SN *sn_bin2sn(const uint8_t *src, size_t length, SN *res) {
         *b = (*b & ~(0xff << (24 - 8 * (i % 4)))) | src[i] << (24 - 8 * (i % 4));
 #else
         *b = (*b & ~(0xff << (8 * (i % 4)))) | src[i] << (8 * (i % 4));
-#endif // __BYTE_ORDER__ 
+#endif // __BYTE_ORDER__
     }
 
     return res;

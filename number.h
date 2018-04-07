@@ -36,7 +36,7 @@ typedef struct smallnum {
     size_t   size; /**< Number of allocated blocks */
     bool     neg; /**< Negative number flag */
 } SN;
-/*@ type invariant number_size_is_positive(SN num) = num.size > 0; */
+/*@ type invariant number_size_is_positive(SN a) = a.size > 0; */
 
 /** @defgroup init Creation, initialisation and clean up
  * @{
@@ -77,6 +77,8 @@ size_t sn_num_bits(const SN *);
  * @{
  */
 SN *sn_add(SN * const restrict, const SN *, const SN *);
+SN *sn_sub(SN * const restrict, const SN *, const SN *);
+SN *sn_mul(SN * const restrict, const SN *, const SN *);
 /* @} */
 
 /** @defgroup conv Conversion from/to byte strings and character strings

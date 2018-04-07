@@ -7,10 +7,13 @@
 #define TESTING_MAIN
 #include "../lib/testing/testing.h"
 
-TEST(init__uninitialized) {
+/* Initialization */
+TEST(init__unitialized) {
     SN a;
+    SN *b = sn_init(&a);
 
-    sn_init(&a);
+    ASSERT(b);
+    ASSERT(b == &a);
 
     ASSERT(a.size == 1);
     ASSERT(a.blocks[0] == 0);
@@ -18,15 +21,18 @@ TEST(init__uninitialized) {
 }
 
 TEST(init__initialized) {
-    SN a = { (sn_word *)666, 5, true };
+    SN  a = { (sn_word *)666, 5, true };
+    SN *b = sn_init(&a);
 
-    ASSERT(sn_init(&a) == &a);
+    ASSERT(b);
+    ASSERT(b == &a);
+
     ASSERT(a.size == 1);
     ASSERT(a.blocks[0] == 0);
     ASSERT(!a.neg);
 }
 
-TEST(new__01) {
+TEST(new__basic) {
     SN *a = sn_new();
 
     ASSERT(a);
@@ -35,6 +41,7 @@ TEST(new__01) {
     ASSERT(!a->neg);
 }
 
+/* Copying */
 TEST(copy__01) {
     sn_word words[] = { 0xdeadbeef, 0x2666 };
     SN b, a = { words, 2, true };
@@ -56,6 +63,7 @@ TEST(duplicate__01) {
     ASSERT(!b->neg);
 }
 
+/* Swapping */
 TEST(swap__01) {
     sn_word a_words[] = { 0xfaceface };
     sn_word b_words[] = { 0xdeaddead, 0xff00ff00};
@@ -73,6 +81,7 @@ TEST(swap__01) {
     ASSERT(!b.neg);
 }
 
+/* Cleanup */
 TEST(free__01) {
     // TODO
     ASSERT(true);
@@ -88,6 +97,7 @@ TEST(clear_free__01) {
     ASSERT(true);
 }
 
+/* Resetting */
 TEST(zero__one_word) {
     sn_word words[] = { 0x49494949 };
     SN a = { words, 1, true };
@@ -136,6 +146,138 @@ TEST(one__multiple_words) {
     ASSERT(a.size == 1);
     ASSERT(a.blocks[0] == 1);
     ASSERT(!a.neg);
+}
+
+/* Addition */
+TEST(add__size_1_nonoverflow) {
+    SN *m = sn_new();
+    SN *n = sn_new();
+    SN *res = sn_new();
+
+    m->blocks[0] = 0xfaffffff;
+    n->blocks[0] = 1;
+
+    sn_add(res, m, n);
+
+    ASSERT(res->size == 1);
+    ASSERT(res->blocks[0] == 0xfb000000);
+
+    sn_free(m);
+    sn_free(n);
+    sn_free(res);
+}
+
+TEST(add__size_1_overflow) {
+    SN *m = sn_new();
+    SN *n = sn_new();
+    SN *res = sn_new();
+
+    m->blocks[0] = 0xffffffff;
+    n->blocks[0] = 1;
+
+    sn_add(res, m, n);
+
+    ASSERT(res->size == 2);
+    ASSERT(res->blocks[0] == 0 && res->blocks[1] == 1);
+
+    sn_free(m);
+    sn_free(n);
+    sn_free(res);
+}
+
+TEST(add__size_2_overflow) {
+    SN *m = sn_new();
+    SN *n = sn_new();
+    SN *res = sn_new();
+
+    m->blocks[0] = 0xffffffff;
+    n->blocks[0] = 1;
+
+    sn_add(res, m, n);
+
+    ASSERT(res->size == 2);
+    ASSERT(res->blocks[0] == 0 && res->blocks[1] == 1);
+
+    sn_free(m);
+    sn_free(n);
+    sn_free(res);
+}
+
+/* Subtraction */
+TEST(sub__size_1_nonunderflow) {
+    SN *m = sn_new();
+    SN *n = sn_new();
+    SN *res = sn_new();
+
+    m->blocks[0] = 0xfaffffff;
+    n->blocks[0] = 1;
+
+    sn_sub(res, m, n);
+
+    ASSERT(res->size == 1);
+    ASSERT(res->blocks[0] == 0xfafffffe);
+    ASSERT(!res->neg);
+
+    sn_free(m);
+    sn_free(n);
+    sn_free(res);
+}
+
+TEST(sub__size_2_underflow) {
+    SN *m = sn_new();
+    SN *n = sn_new();
+    SN *res = sn_new();
+
+    m->blocks[0] = 0xffffffff;
+    n->blocks[0] = 1;
+
+    sn_add(res, m, n);
+
+    ASSERT(res->size == 2);
+    ASSERT(res->blocks[0] == 0 && res->blocks[1] == 1);
+    ASSERT(!res->neg);
+
+    n->blocks[0] = 2;
+    sn_swap(res, m);
+    sn_sub(res, m, n);
+
+    ASSERT(res->size == 2);
+    ASSERT(res->blocks[0] == 0xfffffffe && res->blocks[1] == 0);
+    ASSERT(!res->neg);
+
+    sn_free(m);
+    sn_free(n);
+    sn_free(res);
+}
+
+TEST(sub__size_3_underflow) {
+    SN *m = sn_new();
+    SN *n = sn_new();
+    SN *res = sn_new();
+
+    m->blocks[0] = 0xffffffff;
+    n->blocks[0] = 1;
+
+    sn_add(res, m, n);
+    sn_swap(res, m);
+    m->blocks[0] = m->blocks[1] = 0xffffffff;
+    sn_add(res, m, n);
+
+    ASSERT(res->size == 3);
+    ASSERT(res->blocks[0] == 0 && res->blocks[1] == 0 && res->blocks[2] == 1);
+    ASSERT(!res->neg);
+
+    n->blocks[0] = 2;
+    sn_swap(res, m);
+    sn_sub(res, m, n);
+
+    ASSERT(res->size == 3);
+    ASSERT(res->blocks[0] == 0xfffffffe && res->blocks[1] == 0xffffffff && res->blocks[2] == 0);
+    ASSERT(!res->neg);
+
+    sn_free(m);
+    sn_free(n);
+    sn_free(res);
 }
 
 TEST(test01) {
