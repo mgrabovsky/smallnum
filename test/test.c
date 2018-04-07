@@ -1,11 +1,12 @@
 #include <stdbool.h>
 #include <stdio.h>
-
-#include "../number.h"
+#include <stdlib.h>
 
 #define TESTING
 #define TESTING_MAIN
-#include "../lib/testing/testing.h"
+#include "../deps/testing/testing.h"
+
+#include "../number.h"
 
 /* Initialization */
 TEST(init__unitialized) {
