@@ -13,9 +13,11 @@ compiler:
 
 before_install:
   - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
-  - sudo apt-get -qq update
-  - sudo apt-get -qq install --only-upgrade binutils
-  - if [ "$CC" != "clang" ]; then sudo apt-get -qq install $CC; fi
+  - sudo apt-get -y update
+  - if [ "$CC" != "clang" ]; then sudo apt-get -y install $CC; fi
+  - wget http://launchpadlibrarian.net/251151780/binutils_2.26-8ubuntu2_amd64.deb
+  - dpkg -i binutils_2.26ubuntu2_amd64.deb
+  - apt-get install -yf
 
 install:
   - wget https://cmocka.org/files/1.1/cmocka-1.1.1.tar.xz
