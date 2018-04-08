@@ -16,7 +16,7 @@ before_install:
   - sudo apt-get -y update
   - if [ "$CC" != "clang" ]; then sudo apt-get -y install $CC; fi
   - wget http://launchpadlibrarian.net/251151780/binutils_2.26-8ubuntu2_amd64.deb
-  - sudo dpkg -i binutils_2.26ubuntu2_amd64.deb
+  - sudo dpkg -i binutils_2.26-8ubuntu2_amd64.deb
   - sudo apt-get install -yf
 
 install:
