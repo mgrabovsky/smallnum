@@ -16,8 +16,8 @@ before_install:
   - sudo apt-get -y update
   - if [ "$CC" != "clang" ]; then sudo apt-get -y install $CC; fi
   - wget http://launchpadlibrarian.net/251151780/binutils_2.26-8ubuntu2_amd64.deb
-  - dpkg -i binutils_2.26ubuntu2_amd64.deb
-  - apt-get install -yf
+  - sudo dpkg -i binutils_2.26ubuntu2_amd64.deb
+  - sudo apt-get install -yf
 
 install:
   - wget https://cmocka.org/files/1.1/cmocka-1.1.1.tar.xz
