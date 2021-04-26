@@ -295,14 +295,47 @@ SN *sn_sub(SN * const res, const SN *a, const SN *b) {
 }
 
 SN *sn_mul(SN * const res, const SN *a, const SN *b) {
-    // TODO
+    assert(res && a && b && sn_valid__(a) && sn_valid__(b));
+    assert(res->blocks != a->blocks && res->blocks != b->blocks);
+
+    if (a->neg || b->neg) {
+        return res;
+    }
+
+    size_t product_size = max(a->size, b->size);
+    if (!sn_resize__(res, product_size)) {
+        return NULL;
+    }
+
+    bool overflow = false;
+    sn_word tmp;
+
+    for (size_t i = 0; i < a->size; ++i) {
+        tmp = 0;
+        for (size_t j = 0; j < b->size; ++j) {
+            tmp     += a->blocks[i] * b->blocks[j] + overflow;
+            overflow = (tmp < a->blocks[i] && tmp < b->blocks[j]);
+        }
+        res->blocks[i] = tmp;
+    }
+
+    if (overflow) {
+        if (!sn_resize__(res, product_size + 1)) {
+            return NULL;
+        }
+        res->blocks[product_size] = overflow;
+    }
+
+    res->neg = false;
+
     return res;
 }
 
 static SN *sn_add_internal__(SN * const res, const SN *a, const SN *b, bool negative) {
     size_t sum_size = max(a->size, b->size);
-    if (!sn_resize__(res, sum_size))
+    if (!sn_resize__(res, sum_size)) {
         return NULL;
+    }
 
     bool overflow = false;
     sn_word tmp   = 0;
@@ -324,8 +357,9 @@ static SN *sn_add_internal__(SN * const res, const SN *a, const SN *b, bool nega
     }
 
     if (overflow) {
-        if (!sn_resize__(res, sum_size + 1))
+        if (!sn_resize__(res, sum_size + 1)) {
             return NULL;
+        }
         res->blocks[sum_size] = overflow;
     }
 

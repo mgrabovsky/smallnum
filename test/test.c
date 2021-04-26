@@ -84,7 +84,7 @@ static void duplicate__01(void **state) {
 /* Swapping */
 static void swap__01(void **state) {
     sn_word a_words[] = { 0xfaceface };
-    sn_word b_words[] = { 0xdeaddead, 0xff00ff00};
+    sn_word b_words[] = { 0xdeaddead, 0xff00ff00 };
     SN a = { a_words, 1, false };
     SN b = { b_words, 2, true };
 
@@ -174,60 +174,161 @@ static void one__multiple_words(void **state) {
 }
 
 /* Addition */
+static void add__zero_plus_zero(void **state) {
+    SN result = { NULL, 1, false },
+       left   = { NULL, 1, false },
+       right  = { NULL, 1, false };
+
+    result.blocks = calloc(1, sizeof(result.blocks));
+    left.blocks   = calloc(1, sizeof(left.blocks));
+    right.blocks  = calloc(1, sizeof(right.blocks));
+
+    sn_add(&result, &left, &right);
+
+    assert_int_equal(result.size, 1);
+    assert_int_equal(result.blocks[0], 0);
+    assert_false(result.neg);
+
+    free(result.blocks);
+    free(left.blocks);
+    free(right.blocks);
+}
+
+static void add__one_plus_zero(void **state) {
+    SN result = { NULL, 1, false },
+       left   = { NULL, 1, false },
+       right  = { NULL, 1, false };
+
+    result.blocks = calloc(1, sizeof(result.blocks));
+    left.blocks   = calloc(1, sizeof(left.blocks));
+    right.blocks  = calloc(1, sizeof(right.blocks));
+
+    left.blocks[0] = 1;
+    sn_add(&result, &left, &right);
+
+    assert_int_equal(result.size, 1);
+    assert_int_equal(result.blocks[0], 1);
+    assert_false(result.neg);
+
+    free(result.blocks);
+    free(left.blocks);
+    free(right.blocks);
+}
+
+static void add__zero_plus_one(void **state) {
+    SN result = { NULL, 1, false },
+       left   = { NULL, 1, false },
+       right  = { NULL, 1, false };
+
+    result.blocks = calloc(1, sizeof(result.blocks));
+    left.blocks   = calloc(1, sizeof(left.blocks));
+    right.blocks  = calloc(1, sizeof(right.blocks));
+
+    right.blocks[0] = 1;
+    sn_add(&result, &left, &right);
+
+    assert_int_equal(result.size, 1);
+    assert_int_equal(result.blocks[0], 1);
+    assert_false(result.neg);
+
+    free(result.blocks);
+    free(left.blocks);
+    free(right.blocks);
+}
+
+static void add__one_plus_one(void **state) {
+    SN result = { NULL, 1, false },
+       left   = { NULL, 1, false },
+       right  = { NULL, 1, false };
+
+    result.blocks = calloc(1, sizeof(result.blocks));
+    left.blocks   = calloc(1, sizeof(left.blocks));
+    right.blocks  = calloc(1, sizeof(right.blocks));
+
+    left.blocks[0] = 1;
+    right.blocks[0] = 1;
+    sn_add(&result, &left, &right);
+
+    assert_int_equal(result.size, 1);
+    assert_int_equal(result.blocks[0], 2);
+    assert_false(result.neg);
+
+    free(result.blocks);
+    free(left.blocks);
+    free(right.blocks);
+}
+
 static void add__size_1_nonoverflow(void **state) {
-    SN *m = sn_new();
-    SN *n = sn_new();
-    SN *res = sn_new();
+    SN result = { NULL, 1, false },
+       left   = { NULL, 1, false },
+       right  = { NULL, 1, false };
 
-    m->blocks[0] = 0xfaffffff;
-    n->blocks[0] = 1;
+    result.blocks = calloc(1, sizeof(result.blocks));
+    left.blocks   = calloc(1, sizeof(left.blocks));
+    right.blocks  = calloc(1, sizeof(right.blocks));
 
-    sn_add(res, m, n);
+    left.blocks[0]  = 0xfaffffff;
+    right.blocks[0] = 1;
 
-    assert_int_equal(res->size, 1);
-    assert_int_equal(res->blocks[0], 0xfb000000);
+    sn_add(&result, &left, &right);
 
-    sn_free(m);
-    sn_free(n);
-    sn_free(res);
+    assert_int_equal(result.size, 1);
+    assert_int_equal(result.blocks[0], 0xfb000000);
+    assert_false(result.neg);
+
+    free(result.blocks);
+    free(left.blocks);
+    free(right.blocks);
 }
 
 static void add__size_1_overflow(void **state) {
-    SN *m = sn_new();
-    SN *n = sn_new();
-    SN *res = sn_new();
+    SN result = { NULL, 1, false },
+       left   = { NULL, 1, false },
+       right  = { NULL, 1, false };
 
-    m->blocks[0] = 0xffffffff;
-    n->blocks[0] = 1;
+    result.blocks = calloc(1, sizeof(result.blocks));
+    left.blocks   = calloc(1, sizeof(left.blocks));
+    right.blocks  = calloc(1, sizeof(right.blocks));
 
-    sn_add(res, m, n);
+    left.blocks[0]  = 0xffffffff;
+    right.blocks[0] = 1;
 
-    assert_int_equal(res->size, 2);
-    assert_int_equal(res->blocks[0], 0);
-    assert_int_equal(res->blocks[1], 1);
+    sn_add(&result, &left, &right);
 
-    sn_free(m);
-    sn_free(n);
-    sn_free(res);
+    assert_int_equal(result.size, 2);
+    assert_int_equal(result.blocks[0], 0x00000000);
+    assert_int_equal(result.blocks[1], 0x00000001);
+    assert_false(result.neg);
+
+    free(result.blocks);
+    free(left.blocks);
+    free(right.blocks);
 }
 
 static void add__size_2_overflow(void **state) {
-    SN *m = sn_new();
-    SN *n = sn_new();
-    SN *res = sn_new();
+    SN result = { NULL, 1, false },
+       left   = { NULL, 2, false },
+       right  = { NULL, 1, false };
 
-    m->blocks[0] = 0xffffffff;
-    n->blocks[0] = 1;
+    result.blocks = calloc(1, sizeof(result.blocks));
+    left.blocks   = calloc(2, sizeof(left.blocks));
+    right.blocks  = calloc(1, sizeof(right.blocks));
 
-    sn_add(res, m, n);
+    left.blocks[0]  = 0xffffffff;
+    left.blocks[1]  = 0xffffffff;
+    right.blocks[0] = 1;
 
-    assert_int_equal(res->size, 2);
-    assert_int_equal(res->blocks[0], 0);
-    assert_int_equal(res->blocks[1], 1);
+    sn_add(&result, &left, &right);
 
-    sn_free(m);
-    sn_free(n);
-    sn_free(res);
+    assert_int_equal(result.size, 3);
+    assert_int_equal(result.blocks[0], 0x00000000);
+    assert_int_equal(result.blocks[1], 0x00000000);
+    assert_int_equal(result.blocks[2], 0x00000001);
+    assert_false(result.neg);
+
+    free(result.blocks);
+    free(left.blocks);
+    free(right.blocks);
 }
 
 /* Subtraction */
@@ -313,27 +414,205 @@ static void sub__size_3_underflow(void **state) {
     sn_free(res);
 }
 
+/* Multiplication */
+static void mul__zero_times_zero(void **state) {
+    SN result = { NULL, 1, false },
+       left   = { NULL, 1, false },
+       right  = { NULL, 1, false };
+
+    result.blocks = calloc(1, sizeof(result.blocks));
+    left.blocks   = calloc(1, sizeof(left.blocks));
+    right.blocks  = calloc(1, sizeof(right.blocks));
+
+    sn_mul(&result, &left, &right);
+
+    assert_int_equal(result.size, 1);
+    assert_int_equal(result.blocks[0], 0);
+    assert_false(result.neg);
+
+    free(result.blocks);
+    free(left.blocks);
+    free(right.blocks);
+}
+
+static void mul__zero_times_one(void **state) {
+    SN result = { NULL, 1, false },
+       left   = { NULL, 1, false },
+       right  = { NULL, 1, false };
+
+    result.blocks = calloc(1, sizeof(result.blocks));
+    left.blocks   = calloc(1, sizeof(left.blocks));
+    right.blocks  = calloc(1, sizeof(right.blocks));
+
+    right.blocks[0] = 1;
+
+    sn_mul(&result, &left, &right);
+
+    assert_int_equal(result.size, 1);
+    assert_int_equal(result.blocks[0], 0);
+    assert_false(result.neg);
+
+    free(result.blocks);
+    free(left.blocks);
+    free(right.blocks);
+}
+
+static void mul__one_times_zero(void **state) {
+    SN result = { NULL, 1, false },
+       left   = { NULL, 1, false },
+       right  = { NULL, 1, false };
+
+    result.blocks = calloc(1, sizeof(result.blocks));
+    left.blocks   = calloc(1, sizeof(left.blocks));
+    right.blocks  = calloc(1, sizeof(right.blocks));
+
+    left.blocks[0] = 1;
+
+    sn_mul(&result, &left, &right);
+
+    assert_int_equal(result.size, 1);
+    assert_int_equal(result.blocks[0], 0);
+    assert_false(result.neg);
+
+    free(result.blocks);
+    free(left.blocks);
+    free(right.blocks);
+}
+
+static void mul__one_times_one(void **state) {
+    SN result = { NULL, 1, false },
+       left   = { NULL, 1, false },
+       right  = { NULL, 1, false };
+
+    result.blocks = calloc(1, sizeof(result.blocks));
+    left.blocks   = calloc(1, sizeof(left.blocks));
+    right.blocks  = calloc(1, sizeof(right.blocks));
+
+    left.blocks[0]  = 1;
+    right.blocks[0] = 1;
+
+    sn_mul(&result, &left, &right);
+
+    assert_int_equal(result.size, 1);
+    assert_int_equal(result.blocks[0], 1);
+    assert_false(result.neg);
+
+    free(result.blocks);
+    free(left.blocks);
+    free(right.blocks);
+}
+
+static void mul__ten_times_one(void **state) {
+    SN result = { NULL, 1, false },
+       left   = { NULL, 1, false },
+       right  = { NULL, 1, false };
+
+    result.blocks = calloc(1, sizeof(result.blocks));
+    left.blocks   = calloc(1, sizeof(left.blocks));
+    right.blocks  = calloc(1, sizeof(right.blocks));
+
+    left.blocks[0]  = 0x0000000a;
+    right.blocks[0] = 0x00000001;
+
+    sn_mul(&result, &left, &right);
+
+    assert_int_equal(result.size, 1);
+    assert_int_equal(result.blocks[0], 0x0000000a);
+    assert_false(result.neg);
+
+    free(result.blocks);
+    free(left.blocks);
+    free(right.blocks);
+}
+
+static void mul__0x10000_times_0x10000_overflow(void **state) {
+    SN result = { NULL, 1, false },
+       left   = { NULL, 1, false },
+       right  = { NULL, 1, false };
+
+    result.blocks = calloc(1, sizeof(result.blocks));
+    left.blocks   = calloc(1, sizeof(left.blocks));
+    right.blocks  = calloc(1, sizeof(right.blocks));
+
+    left.blocks[0]  = 0x00010000;
+    right.blocks[0] = 0x00010000;
+
+    sn_mul(&result, &left, &right);
+
+    assert_int_equal(result.size, 2);
+    assert_int_equal(result.blocks[0], 0x00000000);
+    assert_int_equal(result.blocks[1], 0x00000001);
+    assert_false(result.neg);
+
+    free(result.blocks);
+    free(left.blocks);
+    free(right.blocks);
+}
+
+static void mul__size_1_overflow(void **state) {
+    SN result = { NULL, 1, false },
+       left   = { NULL, 1, false },
+       right  = { NULL, 1, false };
+
+    result.blocks = calloc(1, sizeof(result.blocks));
+    left.blocks   = calloc(1, sizeof(left.blocks));
+    right.blocks  = calloc(1, sizeof(right.blocks));
+
+    left.blocks[0]  = 0xffffffff;
+    right.blocks[0] = 0xfefefefe;
+
+    sn_mul(&result, &left, &right);
+
+    assert_int_equal(result.size, 2);
+    assert_int_equal(result.blocks[0], 0x01010102);
+    assert_int_equal(result.blocks[1], 0xfefefefd);
+    assert_false(result.neg);
+
+    free(result.blocks);
+    free(left.blocks);
+    free(right.blocks);
+}
+
 int main(void) {
     const struct CMUnitTest tests[] = {
+        /* Initialization */
         cmocka_unit_test(init__unitialized),
         cmocka_unit_test(init__initialized),
         cmocka_unit_test(new__basic),
+        /* Copying */
         cmocka_unit_test(copy__01),
         cmocka_unit_test(duplicate__01),
+        /* Swapping */
         cmocka_unit_test(swap__01),
+        /* Cleanup */
         cmocka_unit_test(free__01),
         cmocka_unit_test(clear__01),
         cmocka_unit_test(clear_free__01),
+        /* Resetting */
         cmocka_unit_test(zero__one_word),
         cmocka_unit_test(zero__multiple_words),
         cmocka_unit_test(one__one_word),
         cmocka_unit_test(one__multiple_words),
+        /* Addition */
+        cmocka_unit_test(add__zero_plus_zero),
+        cmocka_unit_test(add__one_plus_zero),
+        cmocka_unit_test(add__zero_plus_one),
+        cmocka_unit_test(add__one_plus_one),
         cmocka_unit_test(add__size_1_nonoverflow),
         cmocka_unit_test(add__size_1_overflow),
         cmocka_unit_test(add__size_2_overflow),
+        /* Subtraction */
         cmocka_unit_test(sub__size_1_nonunderflow),
         cmocka_unit_test(sub__size_2_underflow),
         cmocka_unit_test(sub__size_3_underflow),
+        /* Multiplication */
+        cmocka_unit_test(mul__zero_times_zero),
+        cmocka_unit_test(mul__zero_times_one),
+        cmocka_unit_test(mul__one_times_zero),
+        cmocka_unit_test(mul__one_times_one),
+        cmocka_unit_test(mul__ten_times_one),
+        cmocka_unit_test(mul__0x10000_times_0x10000_overflow),
+        cmocka_unit_test(mul__size_1_overflow),
     };
 
     return cmocka_run_group_tests(tests, NULL, NULL);
